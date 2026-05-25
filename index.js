@@ -462,48 +462,87 @@ pre {
     // SWIPES
     // ---------------------------------
 
+
+  function isElementVisible(el) {
+    if (!el) return false;
+
+    const style = window.getComputedStyle(el);
+
+    return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        style.opacity !== "0" &&
+        el.offsetParent !== null
+    );
+  }
+
     function observeSwipes() {
 
-        const observer = new MutationObserver(() => {
+    const observer = new MutationObserver(() => {
 
-            document.querySelectorAll(".mes").forEach(mes => {
+        document.querySelectorAll(".mes").forEach(mes => {
 
-                const id = getMessageId(mes);
-                if (!id) return;
+            const id = getMessageId(mes);
+            if (!id) return;
 
-                const controls = mes.querySelector(".mes_swipe_controls");
-                const has = !!controls;
+            const swipeRight = mes.querySelector(".swipe_right");
+            const swipeLeft  = mes.querySelector(".swipe_left");
 
-                const prev = messageSwipeState.get(id) || {
-                    active: false,
-                    history: []
-                };
+            const visible =
+                isElementVisible(swipeRight) ||
+                isElementVisible(swipeLeft);
 
-                if (has && !prev.active) {
-                    prev.active = true;
-                    prev.history.push({ type: "ADDED", time: Date.now() });
-                    logEvent("SWIPE_BUTTONS_ADDED", { messageId: id });
-                }
+            const prev = messageSwipeState.get(id) || {
+                visible: false,
+                history: []
+            };
 
-                if (!has && prev.active) {
-                    prev.active = false;
-                    prev.history.push({ type: "REMOVED", time: Date.now() });
-                    logEvent("SWIPE_BUTTONS_REMOVED", { messageId: id });
-                }
+            if (visible && !prev.visible) {
 
-                messageSwipeState.set(id, prev);
-            });
+                prev.visible = true;
 
+                prev.history.push({
+                    type: "VISIBLE",
+                    time: Date.now()
+                });
+
+                logEvent("SWIPE_BUTTONS_SHOWN", {
+                    messageId: id
+                });
+            }
+
+            if (!visible && prev.visible) {
+
+                prev.visible = false;
+
+                prev.history.push({
+                    type: "HIDDEN",
+                    time: Date.now()
+                });
+
+                logEvent("SWIPE_BUTTONS_HIDDEN", {
+                    messageId: id
+                });
+            }
+
+            messageSwipeState.set(id, prev);
         });
 
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true
-        });
+    });
 
-        logEvent("SWIPE_OBSERVER_STARTED", {});
-    }
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: [
+            "class",
+            "style",
+            "hidden"
+        ]
+    });
+
+    logEvent("SWIPE_OBSERVER_STARTED", {});
+  }
 
     // ---------------------------------
     // COPY TRACKING
