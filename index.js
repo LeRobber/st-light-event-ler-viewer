@@ -96,29 +96,21 @@ jQuery(async () => {
                 payload = String(data);
             }
         }
-/*
+
         el.innerHTML = `
             <div class="name">${name}</div>
             <div class="time">${time}</div>
-            <details class="payload" >
+            <details class="payload">
                 <summary>payload</summary>
                 <pre></pre>
             </details>
-        `;  
-      */
-        el.innerHTML = `
-            <div class="name">${name}</div>
-            <div class="time">${time}</div>
         `;
 
-      //  el.querySelector("pre").textContent = payload;
+        el.querySelector("pre").textContent = payload;
 
+        logContainer.prepend(el);
 
-        if (name!="stream_token_received"){
-           logContainer.prepend(el);
-        }
-
-        while (logContainer.children.length > 10000) {
+        while (logContainer.children.length > 100000) {
             logContainer.lastChild.remove();
         }
     }
